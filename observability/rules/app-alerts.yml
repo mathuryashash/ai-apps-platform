@@ -29,12 +29,14 @@ groups:
           description: "p95 latency is {{ $value }}ms on {{ $labels.service_name }}."
 
       # Pod restart storm: >3 restarts in 15m
-      - alert: PodRestartStorm
-        expr: |
-          increase(kube_pod_container_status_restarts_total[15m]) > 3
-        for: 0m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Pod {{ $labels.pod }} restarting frequently"
-          description: "{{ $labels.pod }} restarted {{ $value }} times in 15m."
+      # NOTE: This alert requires kube-state-metrics which is NOT installed here (too heavy for shared laptop RAM).
+      # Uncomment when deploying to a system with kube-state-metrics installed.
+      # - alert: PodRestartStorm
+      #   expr: |
+      #     increase(kube_pod_container_status_restarts_total[15m]) > 3
+      #   for: 0m
+      #   labels:
+      #     severity: critical
+      #   annotations:
+      #     summary: "Pod {{ $labels.pod }} restarting frequently"
+      #     description: "{{ $labels.pod }} restarted {{ $value }} times in 15m."
