@@ -4,7 +4,7 @@
 ## Unit tests (no Docker required)
 
 ```
-$ cd D:/build5/ai-apps-platform
+$ cd ai-apps-platform
 $ python -m pytest tests/ -v --tb=short
 
 ============================= test session starts =============================
