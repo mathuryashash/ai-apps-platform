@@ -1,0 +1,11 @@
+# Resume Lines
+
+## Bullets (<=30 words each)
+
+- Built Kubernetes platform (kind/EKS-ready) for two FastAPI AI apps: Helm charts, HPA, PDB, OTel observability, Prometheus alerts; 30/30 unit tests passing.
+- Wrote Terraform for VPC, EKS, RDS pgvector, ECR, GitHub OIDC deploy role; 5 mock-provider security tests (private subnets, encryption, OIDC scoped to main branch).
+- k6 load test on kind cluster: 19.5 req/s, p95 42ms, 0% errors; Grafana RED dashboard provisioned via code.
+
+## Keywords the code actually uses and tests
+
+Kubernetes, Helm, kind, ingress-nginx, HPA, PodDisruptionBudget, OpenTelemetry (OTLP gRPC), Prometheus, Grafana, alert rules, Terraform, EKS, RDS Postgres 17, pgvector, ECR, GitHub OIDC, IAM, Secrets Manager, Docker multi-stage build, non-root containers, k6, FastAPI, Python, CI/CD (GitHub Actions), kubeconform, actionlint, tflint

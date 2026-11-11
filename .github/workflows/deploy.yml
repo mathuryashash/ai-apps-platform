@@ -1,0 +1,79 @@
+name: Deploy to EKS
+
+# Triggered manually only — never runs in CI automatically.
+# Requires AWS_DEPLOY_ROLE_ARN secret; job is SKIPPED if the secret is absent.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "prod"
+        type: choice
+        options: [prod, staging]
+      image_tag:
+        description: "Image tag to deploy"
+        required: true
+        default: "latest"
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    # Skip when the required secret is absent (safe in forks / OSS context)
+    if: vars.AWS_DEPLOY_ROLE_ARN != ''
+    environment: ${{ github.event.inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ap-south-1
+
+      - name: Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push jobtracker
+        run: |
+          TAG="${{ steps.ecr-login.outputs.registry }}/ai-apps-platform/jobtracker:${{ github.event.inputs.image_tag }}"
+          docker build -f docker/jobtracker/Dockerfile apps/jobtracker -t "$TAG"
+          docker push "$TAG"
+
+      - name: Build and push voice-agent
+        run: |
+          TAG="${{ steps.ecr-login.outputs.registry }}/ai-apps-platform/voice-agent:${{ github.event.inputs.image_tag }}"
+          docker build -f docker/voice-agent/Dockerfile . -t "$TAG"
+          docker push "$TAG"
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig --name ai-apps-platform --region ap-south-1
+
+      - name: Deploy apps
+        run: |
+          ECR="${{ steps.ecr-login.outputs.registry }}"
+          TAG="${{ github.event.inputs.image_tag }}"
+          helm upgrade --install jobtracker charts/app-chart \
+            -f charts/values/jobtracker.yaml \
+            --set image.repository="${ECR}/ai-apps-platform/jobtracker" \
+            --set image.tag="${TAG}" \
+            --wait --timeout 300s
+          helm upgrade --install voice-agent charts/app-chart \
+            -f charts/values/voice-agent.yaml \
+            --set image.repository="${ECR}/ai-apps-platform/voice-agent" \
+            --set image.tag="${TAG}" \
+            --wait --timeout 300s
+
+      - name: Smoke test on EKS
+        run: bash scripts/smoke.sh

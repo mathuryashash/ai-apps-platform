@@ -1,0 +1,94 @@
+# Default values — override per-app via values/jobtracker.yaml or values/voice-agent.yaml
+replicaCount: 1
+
+image:
+  repository: ""
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: ""
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 15
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+env: []
+  # - name: GROQ_API_KEY
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: app-secrets
+  #       key: GROQ_API_KEY
+
+envFrom: []
+
+configMap:
+  data: {}
+
+secret:
+  # Names of env vars to pull from the named Secret at deploy time
+  # On AWS: populated via External Secrets Operator from Secrets Manager
+  name: ""
+  keys: []
+
+otel:
+  enabled: true
+  endpoint: "http://otel-collector:4317"
+  serviceName: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8000"
+  prometheus.io/path: "/metrics"
+
+serviceAccount:
+  create: false
+  name: ""

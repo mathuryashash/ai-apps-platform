@@ -1,0 +1,24 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: ai-apps-platform
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      # ingress-nginx HTTP (assigned range: 18000-18099)
+      - containerPort: 80
+        hostPort: 18080
+        protocol: TCP
+      # Prometheus (NodePort 30090 -> host 18090)
+      - containerPort: 30090
+        hostPort: 18090
+        protocol: TCP
+      # Grafana (NodePort 30091 -> host 18091)
+      - containerPort: 30091
+        hostPort: 18091
+        protocol: TCP

@@ -1,0 +1,73 @@
+# jobtracker-specific values
+fullnameOverride: jobtracker
+
+image:
+  repository: ai-apps-platform/jobtracker
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: jobtracker.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  requests:
+    cpu: "150m"
+    memory: "384Mi"
+  limits:
+    cpu: "500m"
+    memory: "768Mi"
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+
+otel:
+  enabled: true
+  endpoint: "http://otel-collector:4317"
+  serviceName: "jobtracker"
+
+# Secret name created at install time:  kubectl create secret generic jobtracker-secrets ...
+# On AWS: External Secrets Operator pulls from Secrets Manager (see infra/aws/)
+secret:
+  name: "jobtracker-secrets"
+  keys:
+    - GROQ_API_KEY
+    - GROQ_MODEL
+    - DATABASE_URL
+    - FERNET_KEY
+
+configMap:
+  data:
+    BACKEND_HOST: "0.0.0.0"
+    BACKEND_PORT: "8000"
+    MAX_UPLOAD_SIZE_MB: "10"
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 45
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 20
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3

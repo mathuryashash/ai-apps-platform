@@ -1,0 +1,6 @@
+[submodule "apps/jobtracker"]
+	path = apps/jobtracker
+	url = https://github.com/mathuryashash/ai-job-tracker
+[submodule "apps/voice-agent"]
+	path = apps/voice-agent
+	url = https://github.com/mathuryashash/indic-voice-agent

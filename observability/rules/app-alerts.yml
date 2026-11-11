@@ -1,0 +1,40 @@
+groups:
+  - name: app-alerts
+    interval: 30s
+    rules:
+      # High 5xx rate: >5% of requests in 5m window
+      - alert: High5xxRate
+        expr: |
+          (
+            sum(rate(http_server_duration_milliseconds_count{http_status_code=~"5.."}[5m])) by (service_name)
+            /
+            sum(rate(http_server_duration_milliseconds_count[5m])) by (service_name)
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 5xx rate on {{ $labels.service_name }}"
+          description: "{{ $labels.service_name }} 5xx rate is {{ $value | humanizePercentage }} over last 5m."
+
+      # High p95 latency: >2s
+      - alert: HighP95Latency
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket[5m])) by (le, service_name)) > 2000
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p95 latency on {{ $labels.service_name }}"
+          description: "p95 latency is {{ $value }}ms on {{ $labels.service_name }}."
+
+      # Pod restart storm: >3 restarts in 15m
+      - alert: PodRestartStorm
+        expr: |
+          increase(kube_pod_container_status_restarts_total[15m]) > 3
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Pod {{ $labels.pod }} restarting frequently"
+          description: "{{ $labels.pod }} restarted {{ $value }} times in 15m."
