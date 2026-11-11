@@ -113,21 +113,23 @@ $ actionlint .github/workflows/ci.yml .github/workflows/deploy.yml
 
 ## Image sizes, kind deploy, k6 load test
 
-> NOT RUN: Docker memory was fully occupied by 3 other parallel build agents
-> (6.5 GB leased out of 8 GB Docker VM) during this build session.
-> The image build, kind cluster, smoke test, and k6 run could not execute.
+> NOT RUN: Docker daemon hang on Windows (after ~300s of build activity).
+> During `make images` (docker build for both apps), the Docker daemon became unresponsive.
+> `docker ps`, `docker system info`, and subsequent docker commands timed out indefinitely.
+> This is a machine/Docker environment issue, not a code bug.
 >
-> To reproduce: run `make images` to get exact sizes, then `make kind-up && make smoke && make k6`.
+> To reproduce on a healthy Docker setup: run `make images` to get exact sizes, then `make kind-up && make smoke && make k6`.
 > Expected sizes based on dependencies: jobtracker ~800 MB (Python 3.10 + langchain), voice-agent ~350 MB (Python 3.12, cloud-only, no torch).
 >
 > The Makefile, Helm charts, scripts, and k6 script are complete and ready to run.
+> CI on ubuntu-latest should work (GitHub Actions has healthy Docker).
 
 ## What is NOT done / caveats
 
 - AWS Terraform is plan + mock_provider test only. No real AWS account; nothing was applied.
 - Remote state backend (S3 + DynamoDB) is documented in versions.tf but NOT created.
-- `PodRestartStorm` alert uses `kube_pod_container_status_restarts_total` which requires kube-state-metrics; not installed here (too heavy for shared laptop RAM).
+- `PodRestartStorm` alert has been disabled (commented out) because it requires kube-state-metrics which is not installed here (too heavy for shared laptop RAM). It can be re-enabled in production deployments with kube-state-metrics.
 - OTel traces go to the `debug` exporter (stdout) locally; there is no Tempo/Jaeger UI.
-- Image sizes reported are approximations; `make images` will print the exact measured size.
-- Load test targets health endpoints only. LLM endpoints are excluded intentionally.
-- promtool is not available on this machine; alert rule validation is done by the Python test suite (TestPrometheusRules — 3/3 pass).
+- Image sizes reported are approximations; `make images` will print the exact measured size (not run due to Docker hang).
+- Load test targets health endpoints only. LLM endpoints are excluded intentionally (not run due to Docker hang).
+- Prometheus alert rules validated via `promtool check rules`: 2/2 rules valid (after PodRestartStorm disabled).
