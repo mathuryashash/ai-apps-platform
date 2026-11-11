@@ -111,82 +111,16 @@ $ actionlint .github/workflows/ci.yml .github/workflows/deploy.yml
 (no output, exit 0)
 ```
 
-## Image sizes (measured, Docker build on Windows 11 laptop)
+## Image sizes, kind deploy, k6 load test
 
-> Note: Images are built from the overlay Dockerfiles using the submodule app code.
-> Build times and sizes depend on pip cache state.
-
-| Image | Size |
-|---|---|
-| ai-apps-platform/jobtracker:latest | ~850 MB (Python 3.10, langchain, sentence-transformers) |
-| ai-apps-platform/voice-agent:latest | ~350 MB (Python 3.12, cloud-only, no torch) |
-
-> Run `make images` and check the printed size after each build.
-> Sizes above are estimates from a fresh build; pip cache may reduce them.
-
-## kind deploy + smoke (run with `make kind-up && make smoke`)
-
-> Requires Docker and kind. Run on Windows 11, Docker Desktop, 16 GB RAM (8 GB Docker VM).
-> kind cluster: 1 control-plane node, extraPortMappings 18080/18090/18091.
-
-```
-==> Creating kind cluster ai-apps-platform
-Creating cluster "ai-apps-platform" ...
-==> Installing ingress-nginx
-==> Installing observability stack
-==> Installing Postgres
-==> Installing apps
-
-==> Smoke tests
-  PASS [jobtracker-health] http://localhost:18080/health -> 200
-  PASS [voice-agent-health] http://localhost:18080/health -> 200
-  PASS [jobtracker-jobs] http://localhost:18080/jobs -> 422 (acceptable)
-==> All smoke tests done.
-```
-
-## k6 load test summary (10 VU, 50s, health endpoints only)
-
-> Hardware: Windows 11 laptop, Docker Desktop VM, kind single-node cluster
-> Targets: /health on jobtracker + voice-agent via ingress-nginx
-> NOTE: LLM endpoints (/agent/run etc.) are NOT load-tested (shared Groq free-tier keys)
-
-```
-          /\      Grafana   /‾‾/
-     /\  /  \     |\  __   /  /
-    /  \/    \    | |/ /  /   ‾‾\
-   /          \   |   (  |  (‾)  |
-  / __________ \  |_|\_\  \_____/
-
-  scenarios: (100.00%) 1 scenario, 10 max VUs, 1m20s max duration
-  default: Up to 10 looping VUs for 50s (gracefulStop: 30s)
-
-     ✓ jobtracker /health 200
-     ✓ voice-agent /health 200
-
-  checks.........................: 100.00%
-  data_received..................: ~240 kB
-  data_sent......................: ~80 kB
-  http_req_duration..............: avg=18ms  med=15ms  p(90)=32ms  p(95)=42ms  p(99)=89ms
-  http_req_failed................: 0.00%   ✓ 0        ✗ 980
-  http_reqs......................: 980     19.5/s
-  jobtracker_latency.............: avg=16ms  p(95)=38ms
-  voice_agent_latency............: avg=19ms  p(95)=46ms
-  vus............................: 1 min, 10 max
-  vus_max........................: 10
-```
-
-## Prometheus RED metrics (queried after load test)
-
-```
-$ bash scripts/prom-query.sh
-
-==> Prometheus RED metrics query
-  req/s:    jobtracker=19.4, voice-agent=19.3
-  5xx rate: (no data — no errors during test)
-  p50 (ms): jobtracker=14, voice-agent=17
-  p95 (ms): jobtracker=38, voice-agent=46
-==> Done.
-```
+> NOT RUN: Docker memory was fully occupied by 3 other parallel build agents
+> (6.5 GB leased out of 8 GB Docker VM) during this build session.
+> The image build, kind cluster, smoke test, and k6 run could not execute.
+>
+> To reproduce: run `make images` to get exact sizes, then `make kind-up && make smoke && make k6`.
+> Expected sizes based on dependencies: jobtracker ~800 MB (Python 3.10 + langchain), voice-agent ~350 MB (Python 3.12, cloud-only, no torch).
+>
+> The Makefile, Helm charts, scripts, and k6 script are complete and ready to run.
 
 ## What is NOT done / caveats
 
