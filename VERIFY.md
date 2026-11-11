@@ -119,7 +119,7 @@ $ actionlint .github/workflows/ci.yml .github/workflows/deploy.yml
 > This is a machine/Docker environment issue, not a code bug.
 >
 > To reproduce on a healthy Docker setup: run `make images` to get exact sizes, then `make kind-up && make smoke && make k6`.
-> Expected sizes based on dependencies: jobtracker ~800 MB (Python 3.10 + langchain), voice-agent ~350 MB (Python 3.12, cloud-only, no torch).
+> Image sizes: not measured yet. `make images` prints them.
 >
 > The Makefile, Helm charts, scripts, and k6 script are complete and ready to run.
 > CI on ubuntu-latest should work (GitHub Actions has healthy Docker).
@@ -130,6 +130,6 @@ $ actionlint .github/workflows/ci.yml .github/workflows/deploy.yml
 - Remote state backend (S3 + DynamoDB) is documented in versions.tf but NOT created.
 - `PodRestartStorm` alert has been disabled (commented out) because it requires kube-state-metrics which is not installed here (too heavy for shared laptop RAM). It can be re-enabled in production deployments with kube-state-metrics.
 - OTel traces go to the `debug` exporter (stdout) locally; there is no Tempo/Jaeger UI.
-- Image sizes reported are approximations; `make images` will print the exact measured size (not run due to Docker hang).
+- Image sizes are not measured yet; `make images` prints the exact size (not run due to a Docker Desktop failure on the build laptop).
 - Load test targets health endpoints only. LLM endpoints are excluded intentionally (not run due to Docker hang).
 - Prometheus alert rules validated via `promtool check rules`: 2/2 rules valid (after PodRestartStorm disabled).
