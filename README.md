@@ -99,7 +99,7 @@ See [docs/DESIGN.md](docs/DESIGN.md) for full decisions and trade-offs.
 - Kind cluster requires Docker and ~2 GB RAM. CI uses GitHub-hosted runners (8 GB).
 - Load test targets `/health` only (not LLM endpoints) to avoid exhausting shared Groq free-tier keys.
 - AWS Terraform is plan-only; no real AWS account. `terraform test` uses a mock provider.
-- The `PodRestartStorm` Prometheus alert requires kube-state-metrics, which is not installed here (too heavy). The alert rule is structurally correct but will not fire without it.
+- The `PodRestartStorm` Prometheus alert is disabled (commented out) because it requires kube-state-metrics, which is not installed here (too heavy). It can be re-enabled in production deployments.
 - OTel traces use `debug` exporter (stdout) locally; no Tempo/Jaeger trace UI.
 
 ## What's next
