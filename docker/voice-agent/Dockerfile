@@ -1,10 +1,10 @@
 # Overlay Dockerfile for voice-agent — adds OTel auto-instrumentation.
-# Build context: apps/voice-agent
+# Build context: repo root (docker build -f docker/voice-agent/Dockerfile .)
 FROM python:3.12-slim AS builder
 ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
-COPY requirements-cloud.txt .
+COPY apps/voice-agent/requirements-cloud.txt .
 RUN pip install --no-cache-dir -r requirements-cloud.txt \
     opentelemetry-distro \
     opentelemetry-exporter-otlp-proto-grpc \
