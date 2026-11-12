@@ -5,16 +5,21 @@ set -euo pipefail
 
 INGRESS="http://localhost:18080"
 
+# A pod can be Ready a few seconds before ingress-nginx adds it to its upstreams; until then
+# the ingress answers 503. Retry for up to ~60 s instead of failing on the first try.
 smoke_check() {
   local name=$1; local url=$2; local expected=${3:-200}
-  local status
-  status=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: ${4:-}" "$url" --max-time 10)
-  if [[ "$status" == "$expected" ]]; then
-    echo "  PASS [$name] $url -> $status"
-  else
-    echo "  FAIL [$name] $url -> $status (expected $expected)"
-    return 1
-  fi
+  local status=""
+  for attempt in $(seq 1 30); do
+    status=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: ${4:-}" "$url" --max-time 10 || true)
+    if [[ "$status" == "$expected" ]]; then
+      echo "  PASS [$name] $url -> $status (attempt $attempt)"
+      return 0
+    fi
+    sleep 2
+  done
+  echo "  FAIL [$name] $url -> $status (expected $expected, 30 attempts)"
+  return 1
 }
 
 echo "==> Smoke tests"
