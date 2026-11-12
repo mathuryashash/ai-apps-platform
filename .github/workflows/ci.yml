@@ -176,6 +176,12 @@ jobs:
             --vus 5 \
             --out json=loadtest/results/k6-ci.json
 
+      - name: Debug cluster state on failure
+        if: failure()
+        run: |
+          kubectl get pods,pvc,events -A --sort-by=.lastTimestamp | tail -60
+          for p in $(kubectl get pods -o name); do echo "== $p"; kubectl describe $p | tail -25; kubectl logs $p --all-containers --tail=40 || true; done
+
   unit-tests:
     name: Unit tests
     runs-on: ubuntu-latest

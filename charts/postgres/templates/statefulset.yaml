@@ -25,6 +25,12 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "postgres.fullname" . }}-secret
+          env:
+            # The volume root is owned by root on most provisioners (kind local-path included),
+            # so initdb running as uid 999 cannot chmod it. Keep the data in a subdirectory
+            # that initdb creates and owns itself.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           resources: {{- toYaml .Values.resources | nindent 12 }}
           livenessProbe:
             exec:
