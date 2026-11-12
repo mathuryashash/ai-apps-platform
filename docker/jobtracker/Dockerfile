@@ -7,7 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
 # Install app deps + OpenTelemetry zero-code instrumentation
+# The app imports cryptography, python-dotenv, numpy and rank-bm25 directly, but its unpinned
+# requirements.txt does not list them; a fresh resolve dropped cryptography (pod crash).
 RUN pip install --no-cache-dir -r requirements.txt \
+    cryptography python-dotenv numpy rank-bm25 \
     opentelemetry-distro \
     opentelemetry-exporter-otlp-proto-grpc \
     opentelemetry-instrumentation-fastapi \
