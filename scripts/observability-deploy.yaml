@@ -26,7 +26,12 @@ data:
         namespace: otel
       debug:
         verbosity: basic
+    extensions:
+      # Serves GET / on :13133 for the Deployment's liveness/readiness probes.
+      health_check:
+        endpoint: 0.0.0.0:13133
     service:
+      extensions: [health_check]
       pipelines:
         traces:
           receivers: [otlp]
@@ -335,8 +340,10 @@ spec:
               mountPath: /dashboards-src
             - name: dashboard-data
               mountPath: /var/lib/grafana/dashboards
+          # Pod sets runAsNonRoot; root here was rejected (CreateContainerConfigError).
+          # fsGroup 472 already makes the emptyDir writable for the grafana uid.
           securityContext:
-            runAsUser: 0
+            runAsUser: 472
       containers:
         - name: grafana
           image: grafana/grafana:latest
